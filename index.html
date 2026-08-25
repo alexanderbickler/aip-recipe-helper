@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AIP Recipe Helper</title>
+<style>
+  :root{
+    --bg:#fbf7f0; --card:#ffffff; --ink:#3a3230; --soft:#7c716b;
+    --line:#ece2d6; --accent:#c2693f; --accent-soft:#f6e7dc;
+    --good:#5b7d5a; --good-soft:#e8efe4; --shadow:0 10px 30px rgba(120,90,60,.10);
+    --radius:18px;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    line-height:1.6; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:760px; margin:0 auto; padding:32px 20px 80px}
+  header{text-align:center; margin:26px 0 10px}
+  .kicker{font-size:.82rem; letter-spacing:.16em; text-transform:uppercase; color:var(--accent); font-family:system-ui,sans-serif; font-weight:600}
+  h1{font-size:2.5rem; margin:.25em 0 .1em; font-weight:700}
+  .tagline{color:var(--soft); font-size:1.12rem; margin:0 auto; max-width:34em}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow)}
+  form.card{padding:22px; margin-top:26px; display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+  input[type=url]{
+    flex:1 1 320px; min-width:0; font-size:1.02rem; padding:14px 16px;
+    border:1px solid var(--line); border-radius:12px; background:#fffdfa; color:var(--ink);
+    font-family:system-ui,sans-serif;
+  }
+  input[type=url]:focus{outline:2px solid var(--accent-soft); border-color:var(--accent)}
+  button{
+    font-family:system-ui,sans-serif; font-weight:600; font-size:1rem;
+    padding:14px 22px; border:none; border-radius:12px; background:var(--accent); color:#fff;
+    cursor:pointer; transition:transform .06s ease, background .2s;
+  }
+  button:hover{background:#a9572f}
+  button:active{transform:translateY(1px)}
+  button:disabled{background:#d8c6ba; cursor:default}
+  .hint{font-family:system-ui,sans-serif; font-size:.85rem; color:var(--soft); text-align:center; margin:14px 2px 0}
+  #status{margin-top:26px; text-align:center; color:var(--soft); font-family:system-ui,sans-serif; display:none}
+  #status.show{display:block}
+  .spinner{width:26px;height:26px;border:3px solid var(--accent-soft);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  #result{margin-top:30px; display:none}
+  #result.show{display:block}
+  .recipe{padding:30px 30px 34px}
+  .recipe h2{font-size:1.9rem; margin:0 0 .1em}
+  .src{font-family:system-ui,sans-serif; font-size:.82rem; color:var(--soft); word-break:break-all; margin-bottom:18px}
+  .src a{color:var(--accent)}
+  .lead{font-size:1.12rem; color:#544943; margin:0 0 8px}
+  .section-title{font-family:system-ui,sans-serif; text-transform:uppercase; letter-spacing:.12em; font-size:.78rem; font-weight:700; color:var(--accent); margin:26px 0 12px; border-bottom:1px solid var(--line); padding-bottom:6px}
+  ul.ing{list-style:none; padding:0; margin:0}
+  ul.ing li{padding:7px 0 7px 26px; position:relative; border-bottom:1px dashed var(--line)}
+  ul.ing li:before{content:"•"; color:var(--accent); position:absolute; left:6px; top:6px}
+  ol.steps{padding-left:22px; margin:0}
+  ol.steps li{margin:0 0 12px; padding-left:6px}
+  .swap{background:var(--good-soft); border:1px solid #d5e2cf; border-radius:12px; padding:12px 14px; margin:0 0 10px}
+  .swap b{color:var(--good)}
+  .swap .why{display:block; font-size:.95rem; color:#5c6a58; margin-top:3px}
+  .arrow{color:var(--good); font-weight:700; padding:0 6px}
+  .note{background:var(--accent-soft); border-radius:12px; padding:16px 18px; margin-top:26px; font-style:italic; color:#6b4a34}
+  .error{background:#fbeae6; border:1px solid #eecabc; color:#8a3c22; border-radius:12px; padding:16px 18px; font-family:system-ui,sans-serif}
+  footer{text-align:center; margin-top:40px; font-family:system-ui,sans-serif; font-size:.8rem; color:var(--soft)}
+  .disclaimer{max-width:52em; margin:12px auto 0; line-height:1.5}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="kicker">Autoimmune Protocol</div>
+      <h1>AIP Recipe Helper</h1>
+      <p class="tagline">Paste a link to any recipe, and I'll gently swap out the ingredients that aren't AIP-friendly for wholesome alternatives that keep your dish delicious.</p>
+    </header>
+
+    <form class="card" id="form">
+      <input type="url" id="url" name="url" placeholder="https://example.com/your-favorite-recipe" required />
+      <button type="submit" id="go">Make it AIP</button>
+    </form>
+    <p class="hint">Works best with links to a single recipe. Give it a moment — good cooking takes a little patience.</p>
+
+    <div id="status">
+      <div class="spinner"></div>
+      <div id="statusText">Reading your recipe and finding lovely swaps…</div>
+    </div>
+
+    <div id="result"></div>
+
+    <footer>
+      <div>Made with care for AIP kitchens.</div>
+      <p class="disclaimer">This tool offers general recipe inspiration and ingredient swaps. It is not medical or nutritional advice. Always double-check labels and ingredients against your own needs, and check with your healthcare provider about your diet.</p>
+    </footer>
+  </div>
+
+<script>
+  const form = document.getElementById('form');
+  const urlInput = document.getElementById('url');
+  const go = document.getElementById('go');
+  const statusBox = document.getElementById('status');
+  const statusText = document.getElementById('statusText');
+  const result = document.getElementById('result');
+
+  const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const url = urlInput.value.trim();
+    if (!url) return;
+
+    go.disabled = true;
+    result.className = '';
+    result.innerHTML = '';
+    statusBox.className = 'show';
+    statusText.textContent = 'Reading your recipe and finding lovely swaps…';
+
+    try {
+      const res = await fetch('/api/convert', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ url })
+      });
+      const data = await res.json();
+      statusBox.className = '';
+
+      if (!res.ok || data.error) {
+        showError(data.error || 'Something went wrong while converting this recipe.');
+      } else {
+        render(data, url);
+      }
+    } catch (err) {
+      statusBox.className = '';
+      showError('I could not reach the recipe or the converter. Please check the link and try again.');
+    } finally {
+      go.disabled = false;
+    }
+  });
+
+  function showError(msg){
+    result.className = 'show';
+    result.innerHTML = '<div class="card recipe"><div class="error">' + esc(msg) + '</div></div>';
+  }
+
+  function render(r, url){
+    let html = '<div class="card recipe">';
+    html += '<h2>' + esc(r.title || 'Your AIP Recipe') + '</h2>';
+    html += '<div class="src">Adapted from <a href="' + esc(url) + '" target="_blank" rel="noopener">' + esc(url) + '</a></div>';
+    if (r.summary) html += '<p class="lead">' + esc(r.summary) + '</p>';
+
+    if (Array.isArray(r.swaps) && r.swaps.length){
+      html += '<div class="section-title">The swaps I made for you</div>';
+      r.swaps.forEach(s => {
+        html += '<div class="swap"><b>' + esc(s.avoid) + '</b><span class="arrow">→</span><b>' + esc(s.include) + '</b>';
+        if (s.why) html += '<span class="why">' + esc(s.why) + '</span>';
+        html += '</div>';
+      });
+    }
+
+    if (Array.isArray(r.ingredients) && r.ingredients.length){
+      html += '<div class="section-title">Ingredients</div><ul class="ing">';
+      r.ingredients.forEach(i => html += '<li>' + esc(i) + '</li>');
+      html += '</ul>';
+    }
+
+    if (Array.isArray(r.instructions) && r.instructions.length){
+      html += '<div class="section-title">Instructions</div><ol class="steps">';
+      r.instructions.forEach(step => html += '<li>' + esc(step) + '</li>');
+      html += '</ol>';
+    }
+
+    if (r.cooksNote) html += '<div class="note">' + esc(r.cooksNote) + '</div>';
+    html += '</div>';
+
+    result.className = 'show';
+    result.innerHTML = html;
+    result.scrollIntoView({behavior:'smooth', block:'start'});
+  }
+</script>
+</body>
+</html>

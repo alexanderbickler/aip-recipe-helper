@@ -1,0 +1,7 @@
+{
+  "name": "aip-recipe-helper",
+  "version": "1.0.0",
+  "description": "Paste a recipe URL and get an AIP-compliant version with tasty ingredient swaps.",
+  "type": "module",
+  "private": true
+}
