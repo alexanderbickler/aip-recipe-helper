@@ -175,13 +175,35 @@ async function fetchRecipeSource(url) {
   return "PAGE TEXT (extract the recipe from this):\n\n" + extractReadableText(html);
 }
 
+// Turn an Anthropic API error into a message that points at the actual fix.
+// Setup problems (key, billing, model) are the site owner's to fix, so say so.
+function friendlyApiError(status, apiMsg) {
+  if (status === 401) {
+    return "The converter isn't set up correctly yet — the site owner's Anthropic API key was rejected. (Error 401)";
+  }
+  if (status === 400 && /credit balance/i.test(apiMsg)) {
+    return "The converter is temporarily unavailable — the site owner needs to add credit to their Anthropic account. (Error 400)";
+  }
+  if (status === 403) {
+    return "The converter isn't set up correctly yet — the site owner's Anthropic API key doesn't have permission for this. (Error 403)";
+  }
+  if (status === 404) {
+    return "The converter isn't set up correctly yet — the AI model it uses wasn't found. (Error 404)";
+  }
+  if (status === 429 || status === 529 || status >= 500) {
+    return "The converter is very busy right now. Please try again in a minute. (Error " + status + ")";
+  }
+  return "The converter had trouble just now. Please try again in a moment. (Error " + status + ")";
+}
+
 // ---- Handler -------------------------------------------------------------
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     res.status(405).json({ error: "Method not allowed." });
     return;
   }
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  // trim guards against a stray space/newline pasted into the Vercel setting
+  const apiKey = (process.env.ANTHROPIC_API_KEY || "").trim();
   if (!apiKey) {
     res.status(500).json({ error: "The converter isn't configured yet — the site owner needs to add an ANTHROPIC_API_KEY." });
     return;
@@ -229,8 +251,11 @@ export default async function handler(req, res) {
 
     if (!anthRes.ok) {
       const detail = await anthRes.text();
-      console.error("Anthropic error", anthRes.status, detail);
-      res.status(200).json({ error: "The converter had trouble just now. Please try again in a moment." });
+      // Log as one plain string so Vercel shows the full message, not "{…}"
+      console.error("Anthropic error " + anthRes.status + ": " + detail);
+      let apiMsg = "";
+      try { apiMsg = String(JSON.parse(detail).error.message || ""); } catch { /* not JSON */ }
+      res.status(200).json({ error: friendlyApiError(anthRes.status, apiMsg) });
       return;
     }
 

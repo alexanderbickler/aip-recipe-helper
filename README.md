@@ -90,6 +90,12 @@ Vercel shows you. Paste a recipe link and try it!
 
 - **"The converter isn't configured yet…"** → the `ANTHROPIC_API_KEY` isn't set,
   or you didn't redeploy after adding it (Step 3).
+- **"…API key was rejected. (Error 401)"** → the key in Vercel isn't valid. It
+  must be an Anthropic key (`sk-ant-…`) added under Vercel **Settings →
+  Environment Variables** (not a GitHub secret) for **Production**, with no
+  quotes or spaces, followed by a **Redeploy**.
+- **"…needs to add credit…"** → add credit under **Billing** at
+  https://console.anthropic.com.
 - **"model not found" in the logs** → open `api/convert.js` and update the
   `MODEL` value near the top to a current model ID from
   https://docs.claude.com/en/docs/about-claude/models
