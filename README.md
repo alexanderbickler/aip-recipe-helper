@@ -42,6 +42,14 @@ cap so there are no surprises. Vercel's free tier covers the hosting.
    key** somewhere safe. You'll paste it into Vercel in Step 3.
    (It starts with `sk-ant-…`. Treat it like a password — never put it on the
    public page or in the code.)
+   - **Create the key inside a workspace** (pick one, such as **Default**, in
+     the **Workspace** dropdown, or create it from **Settings → Workspaces**).
+     An organization-wide key that isn't in a workspace is rejected with
+     "This API key is not scoped to a workspace."
+4. **Create a new key every 30 days.** Make the new key (in the same
+   workspace), replace the value in Vercel (Step 3), redeploy, check the site
+   still works, then delete the old key in the console. A calendar reminder
+   makes this easy to remember.
 
 ---
 
@@ -94,6 +102,8 @@ Vercel shows you. Paste a recipe link and try it!
   must be an Anthropic key (`sk-ant-…`) added under Vercel **Settings →
   Environment Variables** (not a GitHub secret) for **Production**, with no
   quotes or spaces, followed by a **Redeploy**.
+- **"…not scoped to a workspace…" in the logs** → the key was created outside a
+  workspace. Create a new key inside a workspace (Step 1) and swap it in.
 - **"…needs to add credit…"** → add credit under **Billing** at
   https://console.anthropic.com.
 - **"model not found" in the logs** → open `api/convert.js` and update the
