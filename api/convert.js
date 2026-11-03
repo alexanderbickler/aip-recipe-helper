@@ -4,7 +4,7 @@
 // ---- Model configuration -------------------------------------------------
 // If this ever errors with "model not found", update the ID below to a current
 // one from https://docs.claude.com/en/docs/about-claude/models
-const MODEL = "claude-sonnet-4-5";
+const MODEL = "claude-sonnet-5-5";
 const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
 
 // ---- AIP food lists (from the project's guides) --------------------------
@@ -239,11 +239,17 @@ export default async function handler(req, res) {
       headers: {
         "Content-Type": "application/json",
         "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01"
+        "anthropic-version": "2023-06-01",
+        // If a safety check declines, retry on a fallback model automatically
+        "anthropic-beta": "server-side-fallback-2026-07-01"
       },
       body: JSON.stringify({
         model: MODEL,
-        max_tokens: 2500,
+        // room for the model's brief thinking plus the recipe JSON
+        max_tokens: 8000,
+        // "low" suits writing tasks like this: fast, inexpensive, still thorough
+        output_config: { effort: "low" },
+        fallbacks: "default",
         system: SYSTEM_PROMPT,
         messages: [{ role: "user", content: "Here is the recipe to adapt to AIP:\n\n" + source }]
       })
@@ -260,7 +266,13 @@ export default async function handler(req, res) {
     }
 
     const data = await anthRes.json();
-    let text = (data.content || []).map(c => c.text || "").join("").trim();
+    if (data.stop_reason === "refusal") {
+      console.error("Anthropic refusal: " + JSON.stringify(data.stop_details || null));
+      res.status(200).json({ error: "I wasn't able to adapt this recipe. Please try a different link." });
+      return;
+    }
+    // Only text blocks hold the answer; skip thinking/fallback blocks
+    let text = (data.content || []).filter(c => c.type === "text").map(c => c.text).join("").trim();
     // strip accidental code fences
     text = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
 
