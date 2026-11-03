@@ -56,6 +56,12 @@
   ul.ing li:before{content:"•"; color:var(--accent); position:absolute; left:6px; top:6px}
   ol.steps{padding-left:22px; margin:0}
   ol.steps li{margin:0 0 12px; padding-left:6px}
+  details.sec > summary.section-title{cursor:pointer; list-style:none; display:flex; justify-content:space-between; align-items:center; user-select:none}
+  details.sec > summary.section-title::-webkit-details-marker{display:none}
+  details.sec > summary.section-title::after{content:""; width:7px; height:7px; border-right:2px solid var(--accent); border-bottom:2px solid var(--accent); transform:rotate(45deg); margin:0 4px 4px 0; transition:transform .2s ease}
+  details.sec:not([open]) > summary.section-title::after{transform:rotate(-45deg); margin-bottom:0}
+  details.sec > summary.section-title:hover{color:#a9572f}
+  details.sec > summary.section-title:focus-visible{outline:2px solid var(--accent-soft); outline-offset:3px; border-radius:4px}
   .swap{background:var(--good-soft); border:1px solid #d5e2cf; border-radius:12px; padding:12px 14px; margin:0 0 10px}
   .swap b{color:var(--good)}
   .swap .why{display:block; font-size:.95rem; color:#5c6a58; margin-top:3px}
@@ -150,25 +156,23 @@
     html += '<div class="src">Adapted from <a href="' + esc(url) + '" target="_blank" rel="noopener">' + esc(url) + '</a></div>';
     if (r.summary) html += '<p class="lead">' + esc(r.summary) + '</p>';
 
+    // Each section is a collapsible <details>, open by default.
+    const section = (title, body) =>
+      '<details class="sec" open><summary class="section-title">' + title + '</summary>' + body + '</details>';
+
     if (Array.isArray(r.swaps) && r.swaps.length){
-      html += '<div class="section-title">The swaps I made for you</div>';
-      r.swaps.forEach(s => {
-        html += '<div class="swap"><b>' + esc(s.avoid) + '</b><span class="arrow">→</span><b>' + esc(s.include) + '</b>';
-        if (s.why) html += '<span class="why">' + esc(s.why) + '</span>';
-        html += '</div>';
-      });
+      html += section('Ingredients Swapped', r.swaps.map(s =>
+        '<div class="swap"><b>' + esc(s.avoid) + '</b><span class="arrow">→</span><b>' + esc(s.include) + '</b>' +
+        (s.why ? '<span class="why">' + esc(s.why) + '</span>' : '') + '</div>').join(''));
     }
 
     if (Array.isArray(r.ingredients) && r.ingredients.length){
-      html += '<div class="section-title">Ingredients</div><ul class="ing">';
-      r.ingredients.forEach(i => html += '<li>' + esc(i) + '</li>');
-      html += '</ul>';
+      html += section('Ingredients', '<ul class="ing">' + r.ingredients.map(i => '<li>' + esc(i) + '</li>').join('') + '</ul>');
     }
 
     if (Array.isArray(r.instructions) && r.instructions.length){
-      html += '<div class="section-title">Instructions</div><ol class="steps">';
-      r.instructions.forEach(step => html += '<li>' + esc(step) + '</li>');
-      html += '</ol>';
+      html += section('Instructions', '<ol class="steps">' + r.instructions.map(step => '<li>' + esc(step) + '</li>').join('') + '</ol>');
+      // Kept outside the section so it stays available when Instructions is collapsed
       html += '<div class="pdf-cta" id="pdfCta"><button type="button" id="pdfBtn">Export Recipe</button>' +
               '<p class="pdf-msg" id="pdfMsg" aria-live="polite"></p></div>';
     }
